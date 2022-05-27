@@ -1,0 +1,38 @@
+<!--
+Initial prototype: two youtube players, one copying the other.
+To test, run `streamerPlayer.loadVideoById("...");` in the javascript console, replacing "..." with a video ID.
+This obviously isn't actually that useful because the two players are in the same page, but it's a start.
+-->
+<div id="streamer"></div>
+<div id="viewer"></div>
+<script>
+// load the API
+var tag = document.createElement('script');
+tag.src = "https://youtube.com/iframe_api";
+var firstScript = document.getElementsByTagName('script')[0];
+firstScript.parentNode.insertBefore(tag, firstScript);
+
+function onYouTubeIframeAPIReady() {
+    viewerPlayer = new YT.Player('viewer');
+    streamerPlayer = new YT.Player('streamer', {
+        'events': {
+            'onStateChange': evt => {
+                console.log(evt.data);
+                if (evt.data == -1) { // before video starts
+                    console.log('-1');
+                    viewerPlayer.loadVideoById(streamerPlayer.getVideoData().video_id, streamerPlayer.getCurrentTime());
+                } else if (evt.data == 2 || evt.data == 3) { // paused or buffering
+                    viewerPlayer.pauseVideo();
+                    viewerPlayer.seekTo(streamerPlayer.getCurrentTime(), true);
+                } else if (evt.data == 1) { // playing
+                    viewerPlayer.seekTo(streamerPlayer.getCurrentTime(), true);
+                    viewerPlayer.playVideo();
+                }
+            },
+            'onPlaybackRateChange': evt => {
+                viewerPlayer.setPlaybackRate(evt.data);
+            }
+        }
+    });
+}
+</script>
